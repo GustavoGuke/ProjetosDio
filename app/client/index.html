@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-+0n0xVW2eSR5OomGNYDnhzAbDsOXxcvSN1TPprVMTNDbiYZCxYbOOl7+AMvyTG2x" crossorigin="anonymous">
+    <title>Projeto Dio Api Criptomoeda</title>
+</head>
+
+<body>
+    <div class="container">
+        <div class= "d-flex justify-content-center m-5">
+            <select name="" id="res" class="form-select form-select-lg mb-3">
+
+            </select>
+        </div>
+
+        <div id="data">
+
+        </div>
+    </div>
+    <script>
+
+        // função para fazer requisição 
+        function fetchJson(url) {
+            return fetch(url).then((r) => {
+                if (!r.ok) {
+                    throw new Error(`Erro na requisição, staus: ${r.status}`)
+                }
+                return r.json()
+            }).catch((error) => {
+                console.error(`Erro: ${error.message}`)
+            })
+        }
+
+        
+        async function reqApi() {
+            let select = document.getElementById('res')
+            let divData = document.getElementById('data')
+            let coins = await fetchJson('http://localhost:3000/')
+
+            // ordena pelo rank das moedas
+            coins.data.sort((a, b) => a.rank - b.rank)
+
+            // trazer as 15 primeiras moedas
+            let rank10 = coins.data.slice(0, 14)
+
+            // fazer a tag option com a primeira requisição na api
+            let option = rank10.forEach(element => {
+                select.innerHTML += `
+               <option value="${element.id}">${element.name}</option>`
+
+            });
+
+            // ao clicar na moeda que quer, irá fazer uma segunda requisição trazendo dados de um outro endpoint
+            select.addEventListener('click', async () => {
+                let id = select.value
+                let dataCoins = await fetchJson(`http://localhost:3000/id${id}`)
+                let dta = dataCoins.data
+                
+                // array para pegar os dados da api
+                let card = []
+
+                // iterar sobre o objeto
+                for (let [key, value] of Object.entries(dta)) {
+                    card.push(value)
+                }
+
+                // trazer os dados na tela 
+                card.forEach(d => {
+
+                    // formatar a data nada perfomático
+                    let date = new Date(d.date_added)
+                    let ano = date.getFullYear()
+                    let mes = date.getMonth()
+                    let dia = date.getDate() + 1
+                    
+                    // tela 
+                    divData.innerHTML = `
+                    <div class="card container" style="width: 500px">
+                        <img src="${d.logo}" class="card-img-top p-2" alt="${d.name}" style="width: 100px"/>
+                        <div class="card-body">
+                            <h4 class="card-title">${d.symbol}</h4>
+                            <div class="card-text">
+                                <p>Data Histórica: ${dia}/${mes}/${ano} </p>
+                                <p>${d.description}</p>
+                            </div>
+                        </div>
+                    </div>
+                   `
+                })
+            })
+        }
+        reqApi()
+    </script>
+</body>
+
+</html>
